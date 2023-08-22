@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { nanoid } from "nanoid/non-secure";
 import {
   Text,
   View,
@@ -7,75 +8,136 @@ import {
   TouchableOpacity,
   Image,
   Pressable,
+  TouchableWithoutFeedback,
+  Keyboard,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
+import { posts } from "../../Data/posts";
 
 const CreatePostsScreen = () => {
   const navigation = useNavigation();
-  const [photo, setPhoto] = useState("");
+
+  const [hasPermission, setHasPermission] = useState(null);
+  const [cameraRef, setCameraRef] = useState(null);
+  const [type, setType] = useState(Camera.Constants.Type.back);
+  const [uriPhoto, setUriPhoto] = useState(null);
+  const [namePhoto, setNamePhoto] = useState();
+  const [terrain, setTerrain] = useState();
+  const [location, setLocation] = useState(null);
+
+  const clear = () => {
+    setUriPhoto(null);
+    setNamePhoto(null);
+    setTerrain(null);
+    setLocation(null);
+  };
+
+  const handlePublish = () => {
+    const post = {
+      id: nanoid(),
+      title: namePhoto,
+      place: terrain,
+      coordinates: location,
+      img: uriPhoto,
+      comments: [],
+      likes: 0,
+    };
+
+    posts.push(post);
+    clear();
+    navigation.navigate("PostsScreen");
+  };
+
+  useEffect(() => {
+    (async () => {
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") {
+        console.log("Permission to access location was denied");
+      }
+    })();
+  }, []);
+
+  useEffect(() => {
+    (async () => {
+      const { status } = await Camera.requestCameraPermissionsAsync();
+      await MediaLibrary.requestPermissionsAsync();
+      setHasPermission(status === "granted");
+    })();
+  }, []);
+
+  if (hasPermission === null) {
+    return <View />;
+  }
+  if (hasPermission === false) {
+    return <Text>No access to camera</Text>;
+  }
 
   return (
-    <View style={styles.container}>
-      <View style={styles.camera}>
-        <View style={styles.photo}>
-          <Image style={styles.photoImg} />
+    <TouchableWithoutFeedback opPress={Keyboard.dismiss}>
+      <View style={styles.container}>
+        <View style={styles.camera}>
+          <View style={styles.photo}>
+            <Image style={styles.photoImg} />
+            <TouchableOpacity style={styles.addPhoto}>
+              <Ionicons name="camera" size={24} color="#BDBDBD" />
+            </TouchableOpacity>
+          </View>
+
           <TouchableOpacity style={styles.addPhoto}>
             <Ionicons name="camera" size={24} color="#BDBDBD" />
           </TouchableOpacity>
         </View>
-
-        <TouchableOpacity style={styles.addPhoto}>
-          <Ionicons name="camera" size={24} color="#BDBDBD" />
-        </TouchableOpacity>
-      </View>
-      <Text style={styles.photoText}>Завантажте фото</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Назва..."
-        placeholderTextColor="#BDBDBD"
-        marginTop={32}
-      />
-      <View style={styles.inputWrapper}>
+        <Text style={styles.photoText}>Завантажте фото</Text>
         <TextInput
           style={styles.input}
-          placeholder="Місцевість..."
+          placeholder="Назва..."
           placeholderTextColor="#BDBDBD"
-          paddingLeft={28}
+          marginTop={32}
         />
-        <Ionicons
-          name="location-outline"
-          size={24}
-          color="#BDBDBD"
-          style={styles.inputIcon}
-        />
-      </View>
+        <View style={styles.inputWrapper}>
+          <TextInput
+            style={styles.input}
+            placeholder="Місцевість..."
+            placeholderTextColor="#BDBDBD"
+            paddingLeft={28}
+          />
+          <Ionicons
+            name="location-outline"
+            size={24}
+            color="#BDBDBD"
+            style={styles.inputIcon}
+          />
+        </View>
 
-      <TouchableOpacity
-        style={{
-          ...styles.buttonCreate,
-          backgroundColor: photo ? "#FF6C00" : "#F6F6F6",
-        }}
-        activeOpacity={0.7}>
-        <Text
+        <TouchableOpacity
           style={{
-            ...styles.buttonCreateText,
-            color: photo ? "#FFFFFF" : "#BDBDBD",
-          }}>
-          Опублікувати
-        </Text>
-      </TouchableOpacity>
+            ...styles.buttonCreate,
+            backgroundColor: photo ? "#FF6C00" : "#F6F6F6",
+          }}
+          activeOpacity={0.7}>
+          <Text
+            style={{
+              ...styles.buttonCreateText,
+              color: photo ? "#FFFFFF" : "#BDBDBD",
+            }}>
+            Опублікувати
+          </Text>
+        </TouchableOpacity>
 
-      <Pressable style={styles.ClearBtn}>
-        <Ionicons name="trash-outline" size={24} color="#BDBDBD" />
-      </Pressable>
-    </View>
+        <Pressable style={styles.ClearBtn}>
+          <Ionicons name="trash-outline" size={24} color="#BDBDBD" />
+        </Pressable>
+      </View>
+    </TouchableWithoutFeedback>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    paddingLeft: 16,
+    paddingRight: 16,
     backgroundColor: "#FFFFFF",
   },
 
