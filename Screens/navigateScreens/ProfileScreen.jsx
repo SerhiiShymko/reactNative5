@@ -12,8 +12,8 @@ const ProfileScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: "centre",
-    alignItems: "centre",
+    justifyContent: "center",
+    alignItems: "center",
   },
 });
 

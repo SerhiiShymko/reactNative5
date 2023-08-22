@@ -7,6 +7,7 @@ import { useNavigation } from "@react-navigation/native";
 import PostsScreen from "./PostsScreen";
 import ProfileScreen from "./ProfileScreen";
 import CreatePostsScreen from "./CreatePostsScreen";
+import { hideAsync } from "expo-splash-screen";
 
 const Tabs = createBottomTabNavigator();
 

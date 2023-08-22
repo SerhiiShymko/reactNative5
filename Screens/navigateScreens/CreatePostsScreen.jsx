@@ -6,12 +6,13 @@ import {
   TextInput,
   TouchableOpacity,
   Image,
+  Pressable,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-// import { useNavigation } from "@react-navigation/native";
+import { useNavigation } from "@react-navigation/native";
 
 const CreatePostsScreen = () => {
-  //   const navigation = useNavigation();
+  const navigation = useNavigation();
   const [photo, setPhoto] = useState("");
 
   return (
@@ -64,6 +65,10 @@ const CreatePostsScreen = () => {
           Опублікувати
         </Text>
       </TouchableOpacity>
+
+      <Pressable style={styles.ClearBtn}>
+        <Ionicons name="trash-outline" size={24} color="#BDBDBD" />
+      </Pressable>
     </View>
   );
 };
@@ -143,6 +148,17 @@ const styles = StyleSheet.create({
   photoImg: {
     width: "100%",
     height: "100%",
+  },
+  ClearBtn: {
+    marginLeft: "auto",
+    marginRight: "auto",
+    width: 70,
+    height: 40,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 20,
+    backgroundColor: "#F6F6F6",
   },
 });
 
