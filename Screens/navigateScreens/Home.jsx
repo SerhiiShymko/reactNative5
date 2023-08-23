@@ -8,7 +8,6 @@ import PostsScreen from "./PostsScreen";
 import ProfileScreen from "./ProfileScreen";
 import CreatePostsScreen from "./CreatePostsScreen";
 
-
 const Tabs = createBottomTabNavigator();
 
 const Home = () => {
@@ -111,6 +110,9 @@ const Home = () => {
               <Ionicons name="arrow-back" size={24} color={"#212121"} />
             </Pressable>
           ),
+          tabBarStyle: {
+            height: 0,
+          },
         }}
       />
       <Tabs.Screen

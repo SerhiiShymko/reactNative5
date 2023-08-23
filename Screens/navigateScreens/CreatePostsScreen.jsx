@@ -1,42 +1,50 @@
-import React, { useEffect, useState } from "react";
 import { nanoid } from "nanoid/non-secure";
+import React, { useState, useEffect } from "react";
+import Ionicons from "@expo/vector-icons/Ionicons";
 import {
-  Text,
   View,
+  Text,
   StyleSheet,
   TextInput,
-  TouchableOpacity,
   Image,
   Pressable,
+  Alert,
+  TouchableHighlight,
   TouchableWithoutFeedback,
   Keyboard,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+
 import { useNavigation } from "@react-navigation/native";
+import { Camera } from "expo-camera";
+import * as MediaLibrary from "expo-media-library";
+import * as Location from "expo-location";
+import LocImg from "../../assets/images/map-pin.png";
+import CameraIconImg from "../../assets/images/camera-icon.png";
+import TrashIcon from "../../assets/images/trash.png";
 import { posts } from "../../Data/posts";
 
-const CreatePostsScreen = () => {
-  const navigation = useNavigation();
-
+export default CreatePostScreen = () => {
   const [hasPermission, setHasPermission] = useState(null);
   const [cameraRef, setCameraRef] = useState(null);
   const [type, setType] = useState(Camera.Constants.Type.back);
   const [uriPhoto, setUriPhoto] = useState(null);
-  const [namePhoto, setNamePhoto] = useState();
+  const [photoName, setPhotoName] = useState();
   const [terrain, setTerrain] = useState();
-  const [location, setLocation] = useState(null);
+  const [location, setLocations] = useState(null);
+
+  const navigation = useNavigation();
 
   const clear = () => {
     setUriPhoto(null);
-    setNamePhoto(null);
+    setPhotoName(null);
     setTerrain(null);
-    setLocation(null);
+    setLocations(null);
   };
 
   const handlePublish = () => {
     const post = {
       id: nanoid(),
-      title: namePhoto,
+      title: photoName,
       place: terrain,
       coordinates: location,
       img: uriPhoto,
@@ -74,59 +82,101 @@ const CreatePostsScreen = () => {
   }
 
   return (
-    <TouchableWithoutFeedback opPress={Keyboard.dismiss}>
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <View style={styles.container}>
-        <View style={styles.camera}>
-          <View style={styles.photo}>
-            <Image style={styles.photoImg} />
-            <TouchableOpacity style={styles.addPhoto}>
-              <Ionicons name="camera" size={24} color="#BDBDBD" />
-            </TouchableOpacity>
-          </View>
-
-          <TouchableOpacity style={styles.addPhoto}>
-            <Ionicons name="camera" size={24} color="#BDBDBD" />
-          </TouchableOpacity>
+        <View style={styles.photoWrap}>
+          {uriPhoto ? (
+            <Image source={{ uri: uriPhoto }} style={styles.photo} />
+          ) : (
+            <Camera type={type} ref={setCameraRef} style={styles.camera}>
+              <Pressable
+                style={styles.cameraBtn}
+                onPress={async () => {
+                  if (cameraRef) {
+                    const { uri } = await cameraRef.takePictureAsync();
+                    await MediaLibrary.createAssetAsync(uri);
+                    setUriPhoto(uri);
+                    console.log(uri);
+                    const locations = await Location.getCurrentPositionAsync(
+                      {}
+                    );
+                    const coords = {
+                      latitude: locations.coords.latitude,
+                      longitude: locations.coords.longitude,
+                    };
+                    setLocations(coords);
+                  }
+                }}>
+                <Image source={CameraIconImg}></Image>
+              </Pressable>
+              <Pressable
+                style={styles.flipContainer}
+                onPress={() => {
+                  setType(
+                    type === Camera.Constants.Type.back
+                      ? Camera.Constants.Type.front
+                      : Camera.Constants.Type.back
+                  );
+                }}>
+                <Ionicons
+                  name="camera-reverse-outline"
+                  size={28}
+                  color="white"
+                />
+              </Pressable>
+            </Camera>
+          )}
         </View>
-        <Text style={styles.photoText}>Завантажте фото</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Назва..."
-          placeholderTextColor="#BDBDBD"
-          marginTop={32}
-        />
-        <View style={styles.inputWrapper}>
+
+        {uriPhoto ? (
+          <Text style={styles.downLoadText}>Редагувати фото</Text>
+        ) : (
+          <Text style={styles.downLoadText}>Завантажте фото</Text>
+        )}
+
+        <View style={styles.inputAreaWrap}>
           <TextInput
-            style={styles.input}
-            placeholder="Місцевість..."
-            placeholderTextColor="#BDBDBD"
-            paddingLeft={28}
-          />
-          <Ionicons
-            name="location-outline"
-            size={24}
-            color="#BDBDBD"
-            style={styles.inputIcon}
-          />
+            type="text"
+            placeholder="Назва..."
+            value={photoName}
+            onChangeText={setPhotoName}
+            placeholderTextColor={"#BDBDBD"}
+            selectionColor="#212121"
+            style={styles.input}></TextInput>
         </View>
+        <View style={styles.locWrap}>
+          <Image source={LocImg} style={styles.locImg} />
+          <View style={styles.inputAreaLocWrap}>
+            <TextInput
+              type="text"
+              placeholder="Місцевість..."
+              value={terrain}
+              onChangeText={setTerrain}
+              placeholderTextColor={"#BDBDBD"}
+              selectionColor="#212121"
+              style={styles.input}></TextInput>
+          </View>
+        </View>
+        {uriPhoto && photoName && terrain ? (
+          <Pressable
+            style={[styles.publishBtn, { backgroundColor: "#FF6C00" }]}
+            onPress={() => handlePublish()}>
+            <Text style={[styles.btnTitle, { color: "#fff" }]}>
+              Опублікувати
+            </Text>
+          </Pressable>
+        ) : (
+          <TouchableHighlight
+            style={[styles.publishBtn, { backgroundColor: "#F6F6F6" }]}
+            onPress={() => Alert.alert("All inputs must be filled")}>
+            <Text style={[styles.btnTitle, { color: "#BDBDBD" }]}>
+              Опублікувати
+            </Text>
+          </TouchableHighlight>
+        )}
 
-        <TouchableOpacity
-          style={{
-            ...styles.buttonCreate,
-            backgroundColor: photo ? "#FF6C00" : "#F6F6F6",
-          }}
-          activeOpacity={0.7}>
-          <Text
-            style={{
-              ...styles.buttonCreateText,
-              color: photo ? "#FFFFFF" : "#BDBDBD",
-            }}>
-            Опублікувати
-          </Text>
-        </TouchableOpacity>
-
-        <Pressable style={styles.ClearBtn}>
-          <Ionicons name="trash-outline" size={24} color="#BDBDBD" />
+        <Pressable style={styles.clearBtn} onPress={clear}>
+          <Image source={TrashIcon} size={24} color="#BDBDBD" />
         </Pressable>
       </View>
     </TouchableWithoutFeedback>
@@ -138,80 +188,97 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingLeft: 16,
     paddingRight: 16,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#fff",
   },
 
-  input: {
-    marginHorizontal: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: "#E8E8E8",
-    height: 50,
-    fontFamily: "Roboto-Regular",
-    color: "#212121",
-    fontSize: 16,
-    lineHeight: 19,
-  },
-  inputWrapper: {
-    position: "relative",
-    marginTop: 16,
-  },
-  inputIcon: {
-    position: "absolute",
-    top: 13,
-    left: 16,
-  },
-  buttonCreate: {
-    marginHorizontal: 16,
-    marginTop: 32,
-    borderRadius: 100,
-  },
-  buttonCreateText: {
-    fontFamily: "Roboto-Regular",
-    fontSize: 16,
-    lineHeight: 19,
-    textAlign: "center",
-    paddingVertical: 16,
-  },
-  camera: {
-    marginHorizontal: 16,
-    marginTop: 32,
+  camera: { flex: 1 },
+
+  photoWrap: {
+    width: "100%",
     height: 240,
-    borderRadius: 10,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  photoText: {
-    marginHorizontal: 16,
-    marginTop: 8,
-    fontFamily: "Roboto-Regular",
-    fontSize: 16,
-    lineHeight: 19,
-    color: "#BDBDBD",
-  },
-  addPhoto: {
-    position: "absolute",
-    backgroundColor: "#FFFFFF",
-    height: 60,
-    width: 60,
-    borderRadius: 100,
-    alignItems: "center",
-    justifyContent: "center",
-    top: 90,
-    left: 142,
+    marginTop: 32,
+    marginBottom: 8,
+    borderRadius: 8,
+    overflow: "hidden",
   },
   photo: {
+    width: "100%",
+    height: "100%",
+  },
+  locImg: {
+    width: 24,
+    height: 24,
+  },
+  locWrap: {
+    display: "flex",
+    flexDirection: "row",
+    gap: 4,
+    alignItems: "center",
+    marginBottom: 52,
+    borderBottomColor: "#E8E8E8",
+    borderBottomWidth: 1,
+  },
+  inputAreaWrap: {
+    height: 50,
+    marginBottom: 16,
+    paddingTop: 16,
+    paddingBottom: 15,
+    borderBottomColor: "#E8E8E8",
+    borderBottomWidth: 1,
+  },
+  inputAreaLocWrap: {
+    width: "100%",
+    height: 50,
+    paddingTop: 16,
+    paddingBottom: 15,
+  },
+  downLoadText: {
+    marginBottom: 25,
+    fontFamily: "Roboto",
+    fontSize: 16,
+    lineHeight: 18.75,
+    fontWeight: 400,
+    color: "#BDBDBD",
+  },
+  cameraBtn: {
     position: "absolute",
-    width: "100%",
-    height: "100%",
-    right: 0,
-    borderColor: "#fff",
-    backgroundColor: "##F6F6F6",
+    top: "50%",
+    left: "50%",
+    transform: [{ translateX: -30 }, { translateY: -30 }],
+    opacity: 0.5,
   },
-  photoImg: {
-    width: "100%",
-    height: "100%",
+  flipContainer: {
+    alignSelf: "flex-start",
+    paddingTop: 10,
+    paddingLeft: 10,
   },
-  ClearBtn: {
+  input: {
+    width: "100%",
+    fontFamily: "Roboto",
+    fontSize: 16,
+    lineHeight: 18.75,
+    color: "#212121",
+  },
+  btnTitle: {
+    fontFamily: "Roboto",
+    fontWeight: 400,
+    fontSize: 16,
+    lineHeight: 18.75,
+  },
+  publishBtn: {
+    marginLeft: "auto",
+    marginRight: "auto",
+    marginTop: -25,
+    marginBottom: 50,
+    display: "flex",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    width: 343,
+    height: 51,
+    borderRadius: 100,
+  },
+  clearBtn: {
     marginLeft: "auto",
     marginRight: "auto",
     width: 70,
@@ -223,5 +290,3 @@ const styles = StyleSheet.create({
     backgroundColor: "#F6F6F6",
   },
 });
-
-export default CreatePostsScreen;
